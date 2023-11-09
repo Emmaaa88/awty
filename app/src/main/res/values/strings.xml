@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">awty</string>
+    <string name="texting_caption">Texting Text from: %1$s</string>
+</resources>
