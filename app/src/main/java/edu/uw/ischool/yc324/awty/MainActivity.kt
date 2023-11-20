@@ -1,14 +1,19 @@
 package edu.uw.ischool.yc324.awty
 
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.telephony.SmsManager
 import android.view.Gravity
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     private lateinit var editTextMessage: EditText
@@ -23,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.SEND_SMS), 1)
 
         editTextMessage = findViewById(R.id.editTextMessage)
         editTextPhoneNumber = findViewById(R.id.editTextPhoneNumber)
@@ -62,29 +69,34 @@ class MainActivity : AppCompatActivity() {
 
         runnable = object : Runnable {
             override fun run() {
-                showCustomToast(phoneNumber, message)
+                sendSms(phoneNumber, message)
                 handler.postDelayed(this, interval * 60000L)
             }
         }
         handler.post(runnable)
     }
 
-    private fun showCustomToast(phoneNumber: String, message: String) {
-        val inflater = layoutInflater
-        val layout = inflater.inflate(R.layout.toast, findViewById(R.id.custom_toast_container))
+    private fun sendSms(phoneNumber: String, message: String) {
+        val smsManager = SmsManager.getDefault()
+        smsManager.sendTextMessage(phoneNumber, null, message, null, null)
+    }
 
-        val textTitle = layout.findViewById<TextView>(R.id.toast_title)
-        textTitle.text = getString(R.string.texting_caption, phoneNumber)
-
-        val textBody = layout.findViewById<TextView>(R.id.toast_body)
-        textBody.text = message
-
-        with (Toast(applicationContext)) {
-            setGravity(Gravity.CENTER_VERTICAL, 0, 0)
-            duration = Toast.LENGTH_LONG
-            view = layout
-            show()
+    private fun sendAudio(phoneNumber: String, audioFileUri: Uri) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "audio/*"
+            putExtra(Intent.EXTRA_STREAM, audioFileUri)
+            putExtra("address", phoneNumber)
         }
+        startActivity(Intent.createChooser(intent, "Send Audio"))
+    }
+
+    private fun sendVideo(phoneNumber: String, videoFileUri: Uri) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "video/*"
+            putExtra(Intent.EXTRA_STREAM, videoFileUri)
+            putExtra("address", phoneNumber)
+        }
+        startActivity(Intent.createChooser(intent, "Send Video"))
     }
 
     private fun stopNagging() {
